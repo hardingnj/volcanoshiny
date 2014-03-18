@@ -29,6 +29,7 @@ shinyServer(function(input, output) {
       xlabel = input$xlabel,
       ylabel = parse(text=strsplit(input$ylabel, ',')),
       scheme = use.colour,
+      draw.signif.line = input$signif,
       add.jitter = input$jitter,
       jitter.factor = input$jitter.factor
     )
@@ -47,7 +48,7 @@ shinyServer(function(input, output) {
   output$histogram <- renderPlot({
     dat <- input.data();
     if(is.null(dat)) return(NULL);
-    hist(dat[,3]);
+    hist(x=dat[,3],main="Histogram of unadjusted p-values", xlab = "p-value");
 	})
 
   output$volcano <- renderPlot({

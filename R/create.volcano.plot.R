@@ -2,7 +2,7 @@ require(scales);
 require(plyr);
 require(futile.logger);
 require(lattice);
-create.volcano.plot <- function(x, y, filename=NULL, point.labels = rep('', length(x)), point.size.range = c(0.25,2.5), label.cex = 0.5, groups = NULL, scheme = c('red', 'blue'), pr.threshold=0.96, xybias = 1, add.jitter=TRUE, jitter.factor=5, xlabel = expression(Effect), ylabel = expression(paste("-log"[10], "P"[adj]))) {
+create.volcano.plot <- function(x, y, filename=NULL, point.labels = rep('', length(x)), point.size.range = c(0.25,2.5), label.cex = 0.5, groups = NULL, scheme = c('red', 'blue'), pr.threshold=0.96, xybias = 1, add.jitter=TRUE, jitter.factor=5, draw.signif.line = TRUE, xlabel = expression(Effect), ylabel = expression(paste("-log"[10], "P"[adj]))) {
 # X = EFFECT
 # Y = PVALUE
 
@@ -12,14 +12,17 @@ create.volcano.plot <- function(x, y, filename=NULL, point.labels = rep('', leng
 	if(min(y < 0) | max(y > 1)) stop('y does not look like a p or a q value');
 	if(length(unique(length(x), length(y), length(point.labels))) != 1) stop('supplied values must be same length');
 
-# adjust y
+    # determine where to draw significance line
+    q.vals <- p.adjust(y, method='fdr');
+
+	# adjust y
 	y <- -log10(y);
 	flog.debug('x:', head(x), capture=TRUE);
 	flog.debug('y:', head(y), capture=TRUE);
 
 	plotting.cex <- rescale(Mod(x), to = point.size.range);
 
-# determine which genes get point.labels.plot
+    # determine which genes get point.labels.plot
     bias = exp(xybias);
 	euc.dist <- sqrt((rescale(x,to=c(-0.5,0.5))*(1/bias))^2 + (rescale(y)*(bias/1))^2);
 	summary(euc.dist);
@@ -30,11 +33,16 @@ create.volcano.plot <- function(x, y, filename=NULL, point.labels = rep('', leng
 			as.character(point.labels),
 			''
 			);
+    # determine where to draw significance line
+    if(all(q.vals > 0.05)) { draw.signif.line <- FALSE; }
+    else { threshold.p.value <- mean(c(min(y[which(q.vals<0.05)]), max(y[which(q.vals>=0.05)]))) }
 
 	x.limit <- round_any( 1.1*max(abs(x), na.rm = TRUE), 0.2, ceiling);
 	y.limit <- round_any( 1.1*max(     y, na.rm = TRUE), 0.2, ceiling);
 	flog.debug('x/y axis limits: %s / %s', x.limit, y.limit)
 	flog.debug('x/y max: %s / %s', max(abs(x), na.rm=TRUE), max(y, na.rm=TRUE))
+
+
 
 	if(!is.null(groups)) {
 		rescaled.y <- rescale(y);
@@ -81,7 +89,7 @@ create.volcano.plot <- function(x, y, filename=NULL, point.labels = rep('', leng
 		panel = function(x, y, ...) {
 		panel.xyplot(x, y, ...);
 		ltext(x=x, y=y, labels = point.labels.plot, pos= 1:4, offset=runif(length(x)), cex=label.cex);
-#panel.abline(h = -log(0.05,10), lty = 2 );
+		if(draw.signif.line) panel.abline(h = threshold.p.value, lty = 2 );
 		}
 	)
 	if(is.null(filename)) return(volcano);
