@@ -1,18 +1,21 @@
 source("R/create.volcano.plot.R");
+source("R/simulate_data.R");
 source("R/modifyList2.R");
+set.seed(111)
 shinyServer(function(input, output) {
 
   input.data <- reactive({
 
     inFile <- input$file1
-    if (is.null(inFile)) return(NULL)
+    if (is.null(inFile)) { dataframe = simulate_data(1000) }
 
-    dataframe <- read.csv(
-		inFile$datapath,
-		header=input$header,
-		sep=input$sep,
-		quote=input$quote
-		)
+	else {
+	    dataframe <- read.csv(
+			inFile$datapath,
+			header=input$header,
+			sep=input$sep,
+			quote=input$quote
+		)}
   })
   usegroups <- reactive({ input$groups })
   volcano.args <- reactive({
