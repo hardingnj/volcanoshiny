@@ -17,23 +17,17 @@ create.volcano.plot <- function(x, y, filename=NULL, point.labels = rep('', leng
 
 	# adjust y
 	y <- -log10(y);
-	flog.debug('x:', head(x), capture=TRUE);
-	flog.debug('y:', head(y), capture=TRUE);
-
 	plotting.cex <- rescale(Mod(x), to = point.size.range);
 
     # determine which genes get point.labels.plot
     bias = exp(xybias);
 	euc.dist <- sqrt((rescale(x,to=c(-0.5,0.5))*(1/bias))^2 + (rescale(y)*(bias/1))^2);
-	flog.debug("EUC dist: %s", summary(euc.dist), capture=T);
 	threshold <- quantile(euc.dist, pr.threshold, na.rm=T);
-	flog.debug("Threshold: %s", threshold)
 	point.labels.plot <- ifelse(
 			euc.dist > threshold,
 			as.character(point.labels),
 			''
 			);
-	flog.debug("labels %s", paste(point.labels.plot, collapse=", "))
 
     # determine where to draw significance line
     if(all(q.vals > 0.05)) { draw.signif.line <- FALSE; }
@@ -41,8 +35,6 @@ create.volcano.plot <- function(x, y, filename=NULL, point.labels = rep('', leng
 
 	x.limit <- round_any(1.1*max(abs(x), na.rm = TRUE), 0.2, ceiling);
 	y.limit <- round_any(1.1*max(y, na.rm = TRUE), 0.2, ceiling);
-	flog.debug('x/y axis limits: %s / %s', x.limit, y.limit)
-	flog.debug('x/y max: %s / %s', max(abs(x), na.rm=TRUE), max(y, na.rm=TRUE))
 
 	if(!is.null(groups)) {
 		rescaled.y <- rescale(y);
