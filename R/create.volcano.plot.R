@@ -2,7 +2,7 @@ require(scales);
 require(plyr);
 require(futile.logger);
 require(lattice);
-create.volcano.plot <- function(x, y, filename=NULL, point.labels = rep('', length(x)), point.size.range = c(0.25,2.5), label.cex = 0.5, groups = NULL, scheme = c('red', 'blue'), pr.threshold=0.96, xybias = 1, add.jitter=TRUE, jitter.factor=5, draw.signif.line = TRUE, xlabel = expression(Effect), ylabel = expression(paste("-log"[10], "P"[adj]))) {
+create.volcano.plot <- function(x, y, filename=NULL, point.labels = rep('', length(x)), point.size.range = c(0.25,2.5), min.alpha=0.1, label.cex = 0.5, groups = NULL, scheme = c('red', 'blue'), nlabels=100, xybias = 1, add.jitter=TRUE, jitter.factor=5, draw.signif.line = TRUE, xlabel = expression(Effect), ylabel = expression(paste("-log"[10], "P"[adj]))) {
 # X = EFFECT
 # Y = PVALUE
 
@@ -15,6 +15,8 @@ create.volcano.plot <- function(x, y, filename=NULL, point.labels = rep('', leng
     # determine where to draw significance line
     q.vals <- p.adjust(y, method='fdr');
 
+	alpha_scale = c(min.alpha, 1.0)
+
 	# adjust y
 	y <- -log10(y);
 	plotting.cex <- rescale(Mod(x), to = point.size.range);
@@ -22,12 +24,14 @@ create.volcano.plot <- function(x, y, filename=NULL, point.labels = rep('', leng
     # determine which genes get point.labels.plot
     bias = exp(xybias);
 	euc.dist <- sqrt((rescale(x,to=c(-0.5,0.5))*(1/bias))^2 + (rescale(y)*(bias/1))^2);
-	threshold <- quantile(euc.dist, pr.threshold, na.rm=T);
+
+    # find top euc.dists
+	euc.order <- rank(euc.dist)
 	point.labels.plot <- ifelse(
-			euc.dist > threshold,
-			as.character(point.labels),
-			''
-			);
+		euc.order >= (length(x) - nlabels),
+		as.character(point.labels),
+		''
+		);
 
     # determine where to draw significance line
     if(all(q.vals > 0.05)) { draw.signif.line <- FALSE; }
@@ -37,13 +41,12 @@ create.volcano.plot <- function(x, y, filename=NULL, point.labels = rep('', leng
 	y.limit <- round_any(1.1*max(y, na.rm = TRUE), 0.2, ceiling);
 
 	if(!is.null(groups)) {
-		rescaled.y <- rescale(y);
+		rescaled.y <- rescale(y, alpha_scale);
 		plotting.colours <- sapply( 1:length(x), function(i) { alpha(scheme[as.numeric(groups[i])],rescaled.y[i])})
 		this.key <- list(
 			text = list(
 			lab = levels(groups),
 			cex = 0.8,
-			#fontface = 'bold',
 			col = 'black'
 			),
 		points = list(
@@ -56,7 +59,7 @@ create.volcano.plot <- function(x, y, filename=NULL, point.labels = rep('', leng
 		padding.text = 1,
 		alpha.background = 1
 		);
-	} else { plotting.colours <- alpha(scheme[1], rescale(y)); this.key <- NULL };
+	} else { plotting.colours <- alpha(scheme[1], rescale(y, alpha_scale)); this.key <- NULL };
 
 # take log of y before jittering.
 	if(add.jitter) { x <- jitter(x, jitter.factor); y <-jitter(y, jitter.factor);}
@@ -77,10 +80,11 @@ create.volcano.plot <- function(x, y, filename=NULL, point.labels = rep('', leng
 		col = plotting.colours,
 		cex = plotting.cex,
 		xlim = c( -x.limit, x.limit),
-		ylim = c(0, y.limit),
+		ylim = c(1, y.limit),
 		panel = function(x, y, ...) {
 		panel.xyplot(x, y, ...);
-		ltext(x=x, y=y, labels = point.labels.plot, pos=sample(1:4, length(x), TRUE), offset=runif(length(x)), cex=label.cex);
+		#ltext(x=x, y=y, labels = point.labels.plot, pos=sample(1:4, length(x), TRUE), offset=runif(length(x)), cex=label.cex);
+		ltext(x=x, y=y, labels = point.labels.plot, pos=3, offset=0.8, cex=label.cex);
 		if(draw.signif.line) panel.abline(h = threshold.p.value, lty = 2 );
 		}
 	)

@@ -27,8 +27,9 @@ shinyServer(function(input, output) {
     list(
       xybias = input$xybias, 
       label.cex = input$labelcex,
-      pr.threshold = rescale(input$threshold, to=c(0.93,1), from = c(0,1)),
+      nlabels = input$nlabels,
       point.size.range = input$range,
+      min.alpha = input$minalpha,
       xlabel = input$xlabel,
       ylabel = parse(text=strsplit(input$ylabel, ',')),
       scheme = use.colour,

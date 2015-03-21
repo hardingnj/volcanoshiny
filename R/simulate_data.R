@@ -1,7 +1,7 @@
 simulate_data <- function(n){
 	# function that simulates n genes of varying p/fc values
 	fold_changes = rnorm(n)
-	sd = runif(n, 0.5, 5)
+	sd = runif(n, .8, 10)
 	q_values = -pnorm(0, abs(fold_changes), sd, log.p=T)
 	p_values = 10^(-q_values)
 	# pvalues cannot be exactly 0
