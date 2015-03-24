@@ -80,7 +80,7 @@ create.volcano.plot <- function(x, y, filename=NULL, point.labels = rep('', leng
 		col = plotting.colours,
 		cex = plotting.cex,
 		xlim = c( -x.limit, x.limit),
-		ylim = c(1, y.limit),
+		ylim = c(0, y.limit),
 		panel = function(x, y, ...) {
 		panel.xyplot(x, y, ...);
 		#ltext(x=x, y=y, labels = point.labels.plot, pos=sample(1:4, length(x), TRUE), offset=runif(length(x)), cex=label.cex);
